@@ -1,6 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
+Parameters:
+  JwtSecretArn:
+    Type: String
+    Description: ARN of JWT secret in Secrets Manager
+
 Globals:
   Function:
     Runtime: nodejs20.x
@@ -10,7 +15,7 @@ Globals:
       Variables:
         TABLE_NAME: !Ref ItemsTable
         USERS_TABLE: !Ref UsersTable
-        JWT_SECRET: "{{resolve:ssm-secure:/serverless-crud/jwt-secret}}"
+        JWT_SECRET_ARN: !Ref JwtSecretArn
 
 Resources:
 
@@ -50,44 +55,6 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  #########################################
-  # 🔐 AUTH FUNCTIONS
-  #########################################
-
-  SignupFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/signup.handler
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref UsersTable
-      Events:
-        SignupAPI:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MyApi
-            Path: /signup
-            Method: post
-
-  LoginFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/login.handler
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: !Ref UsersTable
-      Events:
-        LoginAPI:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MyApi
-            Path: /login
-            Method: post
-
-  #########################################
-  # 📦 CRUD FUNCTIONS
-  #########################################
-
   CreateItemFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -95,8 +62,10 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ItemsTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref JwtSecretArn
       Events:
-        CreateItemAPI:
+        Api:
           Type: Api
           Properties:
             RestApiId: !Ref MyApi
@@ -111,7 +80,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref ItemsTable
       Events:
-        GetItemAPI:
+        Api:
           Type: Api
           Properties:
             RestApiId: !Ref MyApi
@@ -126,7 +95,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref ItemsTable
       Events:
-        ListItemsAPI:
+        Api:
           Type: Api
           Properties:
             RestApiId: !Ref MyApi
@@ -140,8 +109,10 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ItemsTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref JwtSecretArn
       Events:
-        UpdateItemAPI:
+        Api:
           Type: Api
           Properties:
             RestApiId: !Ref MyApi
@@ -155,8 +126,10 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ItemsTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref JwtSecretArn
       Events:
-        DeleteItemAPI:
+        Api:
           Type: Api
           Properties:
             RestApiId: !Ref MyApi

@@ -1,15 +1,18 @@
 const jwt = require("jsonwebtoken");
-
-const SECRET = process.env.JWT_SECRET;
+const { getJwtSecret } = require("./secretManager");
 
 module.exports.generateToken = async (user) => {
+  const secret = await getJwtSecret();
+
   return jwt.sign(
     { email: user.email },
-    SECRET,
+    secret,
     { expiresIn: "1h" }
   );
 };
 
 module.exports.verifyToken = async (token) => {
-  return jwt.verify(token, SECRET);
+  const secret = await getJwtSecret();
+
+  return jwt.verify(token, secret);
 };
