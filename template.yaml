@@ -19,17 +19,10 @@ Globals:
 
 Resources:
 
-  #########################################
-  # 📦 API Gateway
-  #########################################
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-
-  #########################################
-  # 🗄️ Tables
-  #########################################
 
   ItemsTable:
     Type: AWS::DynamoDB::Table
@@ -135,10 +128,6 @@ Resources:
             RestApiId: !Ref MyApi
             Path: /items/{id}
             Method: delete
-
-#########################################
-# 🌐 OUTPUT
-#########################################
 
 Outputs:
   ApiUrl:
