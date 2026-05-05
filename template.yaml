@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 10
+    MemorySize: 128
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref ItemsTable
+        USERS_TABLE: !Ref UsersTable
+        JWT_SECRET: "{{resolve:ssm-secure:/serverless-crud/jwt-secret}}"
+
+Resources:
+
+  #########################################
+  # 📦 API Gateway
+  #########################################
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+
+  #########################################
+  # 🗄️ Tables
+  #########################################
+
+  ItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ItemsTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UsersTable
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  #########################################
+  # 🔐 AUTH FUNCTIONS
+  #########################################
+
+  SignupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/signup.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        SignupAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /signup
+            Method: post
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/login.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        LoginAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /login
+            Method: post
+
+  #########################################
+  # 📦 CRUD FUNCTIONS
+  #########################################
+
+  CreateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/createItem.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        CreateItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /items
+            Method: post
+
+  GetItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getItem.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        GetItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /items/{id}
+            Method: get
+
+  ListItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/listItems.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        ListItemsAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /items
+            Method: get
+
+  UpdateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/updateItem.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        UpdateItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /items/{id}
+            Method: put
+
+  DeleteItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/deleteItem.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        DeleteItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /items/{id}
+            Method: delete
+
+#########################################
+# 🌐 OUTPUT
+#########################################
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
