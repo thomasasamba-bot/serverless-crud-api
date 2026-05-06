@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+const jwtUtil = require("../utils/jwt");
 const logger = require("../utils/logger");
 
 module.exports = async (event) => {
@@ -14,7 +14,7 @@ module.exports = async (event) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = await jwtUtil.verifyToken(token);
 
     logger.info("User authenticated", {
       requestId,
