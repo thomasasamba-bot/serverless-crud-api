@@ -9,6 +9,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -34,10 +38,26 @@ jobs:
       - name: 🏗️ Build
         run: sam build
 
+      - name: 🔍 Validate Secrets
+        run: |
+          if [ -z "$JWT_SECRET_ARN" ]; then
+            echo "❌ JWT_SECRET_ARN is missing"
+            exit 1
+          fi
+
+          if [[ "$JWT_SECRET_ARN" =~ ^arn: ]]; then
+            echo "✅ Valid ARN detected"
+          else
+            echo "❌ Invalid ARN format"
+            exit 1
+          fi
+
       - name: 🚀 Deploy
-        run: sam deploy \
-              --stack-name serverless-crud-app \
-              --capabilities CAPABILITY_IAM \
-              --no-confirm-changeset \
-              --no-fail-on-empty-changeset \
-              --parameter-overrides JwtSecretArn=${{ secrets.JWT_SECRET_ARN }}
+        run: |
+          sam deploy \
+            --stack-name serverless-crud-app \
+            --region $AWS_REGION \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides JwtSecretArn=$JWT_SECRET_ARN
