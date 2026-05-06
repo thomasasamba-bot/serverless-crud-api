@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/aws/serverless-application-model/main/samtranslator/schema/schema.json
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
@@ -130,19 +131,19 @@ Resources:
             Method: delete
 
   SignupFunction:
-  Type: AWS::Serverless::Function
-  Properties:
-    Handler: src/handlers/signup.handler
-    Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-    Events:
-      Api:
-        Type: Api
-        Properties:
-          RestApiId: !Ref MyApi
-          Path: /signup
-          Method: post
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/signup.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /signup
+            Method: post
 
   LoginFunction:
     Type: AWS::Serverless::Function
