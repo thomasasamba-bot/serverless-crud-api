@@ -7,8 +7,8 @@ s3_prefix = "serverless-crud-app"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
-region = "us-east-1"
-parameter_overrides = ""
+parameter_overrides = "JwtSecretArn=\"arn:aws:secretsmanager:us-east-1:639729144396:secret:serverless-crud-jwt-secret-Vzuvl6\""
+disable_rollback = true
 
 [default.global.parameters]
 region = "us-east-1"
