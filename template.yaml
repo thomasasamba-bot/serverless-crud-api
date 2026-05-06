@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
@@ -128,6 +128,38 @@ Resources:
             RestApiId: !Ref MyApi
             Path: /items/{id}
             Method: delete
+
+  SignupFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    Handler: src/handlers/signup.handler
+    Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+    Events:
+      Api:
+        Type: Api
+        Properties:
+          RestApiId: !Ref MyApi
+          Path: /signup
+          Method: post
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/login.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsersTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref JwtSecretArn
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /login
+            Method: post
 
 Outputs:
   ApiUrl:
